@@ -1,6 +1,16 @@
-package com.demo.chat.websocket;/**
+package com.demo.chat.websocket;
+
+import lombok.Data;
+
+/**
  * @author hongbo.pan
  * @date 2023/6/27
  */
+@Data
 public class MessageVO {
+
+    private String fromUser;
+    private String toUser;
+    private String message;
+    private String sendType;
 }

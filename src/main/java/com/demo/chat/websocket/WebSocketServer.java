@@ -1,12 +1,15 @@
-package com.prolog.rdc.tms.service.message.impl;
+package com.demo.chat.websocket;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
+import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
@@ -19,10 +22,12 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@ServerEndpoint("/messageJob/websocket/{channel}/{userId}")
+@ServerEndpoint("/chat/{userId}")
 public class WebSocketServer {
 
     private static Map<String, WebSocketServer> webSocketMap = Maps.newConcurrentMap();
+
+    private static final String PING = "PING";
 
     /**
      * 连接会话
@@ -38,9 +43,9 @@ public class WebSocketServer {
      * 连接建立成功调用的方法
      */
     @OnOpen
-    public void onOpen(Session session, @PathParam("channel") String channel, @PathParam("userId") String userId) {
+    public void onOpen(Session session, @PathParam("userId") String userId) {
         this.session = session;
-        this.sid = channel + "-" + userId;
+        this.sid = userId;
         webSocketMap.put(this.sid, this);
         log.info("开始监听:" + this.sid + ",当前人数为:" + webSocketMap.keySet().size());
     }
@@ -54,7 +59,6 @@ public class WebSocketServer {
         log.info("释放的sid为：" + this.sid + ",当前人数为:" + webSocketMap.keySet().size());
     }
 
-
     /**
      * onError
      * @param error
@@ -67,21 +71,27 @@ public class WebSocketServer {
     /**
      * sendMessage
      * @param message
-     * @param userId
      */
-    public static void sendMessage(String message, String userId) {
-        String pcSid = "pc-" + userId;
-        String wechatSid = "wechat-" + userId;
-        sendMessageToClient(message, pcSid);
-        sendMessageToClient(message, wechatSid);
+    @OnMessage
+    public void onMessage(String message) {
+        log.info("message={}", message);
+        if (StrUtil.isNotBlank(message)) {
+            if (PING.equals(message)) {
+                sendMessage(this.sid, "PONG");
+                log.info("心跳");
+            } else {
+                MessageVO vo = JSON.parseObject(message, MessageVO.class);
+                sendMessage(vo.getToUser(), vo.getMessage());
+            }
+        }
     }
 
     /**
-     * sendMessageToClient
-     * @param message
+     * sendMessage
      * @param sid
+     * @param message
      */
-    private static void sendMessageToClient(String message, String sid) {
+    public static void sendMessage(String sid, String message) {
         if (webSocketMap.containsKey(sid)) {
             log.info("推送消息到窗口={}，推送内容={}", sid,  message);
             WebSocketServer webSocketServer = webSocketMap.get(sid);
