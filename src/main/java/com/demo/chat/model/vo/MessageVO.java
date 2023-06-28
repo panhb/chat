@@ -1,4 +1,4 @@
-package com.demo.chat.websocket;
+package com.demo.chat.model.vo;
 
 import lombok.Data;
 
