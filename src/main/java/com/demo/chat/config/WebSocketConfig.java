@@ -26,7 +26,7 @@ import java.util.Map;
 @Slf4j
 @EnableWebSocket
 @Configuration
-public class WebSocketConfigure implements WebSocketConfigurer {
+public class WebSocketConfig implements WebSocketConfigurer {
 
     public static final String WEBSOCKET_TOKEN = "token";
 
